@@ -279,7 +279,7 @@ function Invoke-RunnerResponseTransport {
             $account = ConvertFrom-RunnerPrivateJson -Text $accountText
             Assert-RunnerAccountBinding -Configuration $Configuration -Account $account
             $CancellationToken.ThrowIfCancellationRequested()
-            $tokenText = Invoke-PrivateCommand @native -Argument @('account', 'get-access-token', '--subscription', $Configuration.subscriptionId, '--tenant', $Configuration.tenantId, '--resource', 'https://management.azure.com/', '--output', 'json', '--only-show-errors')
+            $tokenText = Invoke-PrivateCommand @native -Argument @('account', 'get-access-token', '--subscription', $Configuration.subscriptionId, '--resource', 'https://management.azure.com/', '--output', 'json', '--only-show-errors')
             $token = ConvertFrom-RunnerPrivateJson -Text $tokenText
         }
         Assert-RunnerAccountBinding -Configuration $Configuration -Account $account

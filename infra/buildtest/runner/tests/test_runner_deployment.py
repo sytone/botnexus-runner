@@ -62,6 +62,7 @@ if args[:2]==['account','show']:
  if mode=='human': print(json.dumps({'id':'11111111-1111-1111-1111-111111111111','tenantId':'22222222-2222-2222-2222-222222222222','user':{'type':'user','name':'PRIVATE_DEPLOY_SENTINEL_87352'}})); sys.exit(0)
  print(json.dumps({'id':'11111111-1111-1111-1111-111111111111','tenantId':'22222222-2222-2222-2222-222222222222','user':{'type':'servicePrincipal','name':'33333333-3333-3333-3333-333333333333'}})); sys.exit(0)
 if args[:2]==['account','get-access-token']:
+ if '--subscription' in args and '--tenant' in args:sys.exit(64)
  print(json.dumps({'accessToken':'SYNTHETIC_DEPLOY_TOKEN','tokenType':'Bearer','subscription':'11111111-1111-1111-1111-111111111111','tenant':'22222222-2222-2222-2222-222222222222','expires_on':str(int(time.time())+3600)})); sys.exit(0)
 assert args[0]=='rest'
 method=args[args.index('--method')+1]
