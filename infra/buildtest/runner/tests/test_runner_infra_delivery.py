@@ -38,7 +38,8 @@ if args[:2]==['account','show']:
 elif args[:2]==['acr','build']:
  dockerfile=Path(args[args.index('--file')+1])
  if not dockerfile.is_absolute() or not dockerfile.is_file() or dockerfile.parent!=Path(args[-1]):sys.exit(52)
- (root/'submitted').write_text(os.environ['SOURCE_COMMIT']); print(json.dumps({'runId':'build123'}))
+ (root/'submitted').write_text(os.environ['SOURCE_COMMIT'])
+ if '--no-wait' not in args:print(json.dumps({'runId':'build123'}))
 elif args[:3]==['acr','task','show-run']:
  tag='src-'+os.environ['SOURCE_COMMIT']
  print(json.dumps({'runId':'build123','status':os.getenv('BUILD_STATUS','Succeeded'),'outputImages':[{'registry':'example.azurecr.io','repository':'runner','tag':tag,'digest':'sha256:'+'a'*64}]}))
@@ -81,6 +82,26 @@ else:sys.exit(51)
         self.assertEqual(0, result.returncode, result.stderr)
         call = next(c for c in self.call_log() if c[:2] == ['acr', 'build'])
         self.assertEqual(str(self.repo / 'infra/buildtest/runner/Dockerfile'), call[call.index('--file') + 1])
+
+    def test_cli_no_wait_is_not_used_because_it_discards_run_identity(self):
+        result = self.invoke_build()
+        self.assertEqual(0, result.returncode, result.stderr)
+        call = next(c for c in self.call_log() if c[:2] == ['acr', 'build'])
+        self.assertNotIn('--no-wait', call)
+        self.assertIn('--no-logs', call)
+        self.assertEqual('build123', json.loads(self.state.read_text())['runId'])
+
+    def test_local_allowance_must_cover_build(self):
+        result = self.invoke_build('-TimeoutSeconds', '120')
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse(self.calls.exists())
+
+    def test_remaining_allowance_checked_after_prebuild_reads(self):
+        result = self.invoke_build('-TimeoutSeconds', '1260')
+        self.assertNotEqual(0, result.returncode)
+        self.assertTrue(any(c[:2] == ['account', 'show'] for c in self.call_log()))
+        self.assertFalse(any(c[:2] == ['acr', 'build'] for c in self.call_log()))
+        self.assertFalse(self.state.exists())
 
     def test_running_build_requires_reconcile_not_rebuild(self):
         result=self.invoke_build(BUILD_STATUS='Running')

@@ -24,7 +24,9 @@ New retained private receipt path under PrivateRoot. Reconcile selects this same
 .PARAMETER ProviderCommand
 Existing Azure CLI executable. Offline tests supply an inert command.
 .PARAMETER TimeoutSeconds
-Maximum local provider-call allowance, including owned cleanup. Defaults to 120.
+Maximum overall provider-call allowance, including the ACR build wait and owned
+cleanup. Defaults to 1500 seconds. A new build requires at least 60 seconds more
+than BuildTimeoutSeconds so Azure can report the terminal result.
 .PARAMETER BuildTimeoutSeconds
 Azure registry build timeout, from 300 to 3600 seconds. Defaults to 1200.
 .PARAMETER Reconcile
@@ -49,7 +51,7 @@ param(
     [Parameter(Mandatory)][string]$PrivateRoot,
     [Parameter(Mandatory)][string]$StatePath,
     [string]$ProviderCommand = 'az',
-    [ValidateRange(4, 600)][int]$TimeoutSeconds = 120,
+    [ValidateRange(4, 3900)][int]$TimeoutSeconds = 1500,
     [ValidateRange(300, 3600)][int]$BuildTimeoutSeconds = 1200,
     [switch]$Reconcile
 )
@@ -60,6 +62,9 @@ $attempted = $false
 try {
     . (Join-Path $PSScriptRoot 'Import-RunnerMaintenanceProfile.ps1')
     . (Join-Path $PSScriptRoot 'Import-RunnerTargetJournal.ps1')
+    if (-not $Reconcile -and $TimeoutSeconds -lt ($BuildTimeoutSeconds + 60)) {
+        throw 'Provider allowance must include the complete build and result readback.'
+    }
     $root = Assert-ObservedPath -Path $SourceRoot -Directory
     $private = (Assert-ObservedPath -Path $PrivateRoot -Directory).TrimEnd([IO.Path]::DirectorySeparatorChar)
     $selection = Read-RunnerMaintenanceProfile -Path $ConfigurationPath -ExpectedSha256 $ConfigurationSha256 -Operation build -SourceRoot $root -PrivateRoot $private -ExpectedCommit $ExpectedCommit
@@ -180,10 +185,13 @@ try {
                 throw 'Existing source tag cannot be overwritten.'
             }
         }
+        if (($TimeoutSeconds - $clock.Elapsed.TotalSeconds) -lt ($BuildTimeoutSeconds + 60)) {
+            throw 'Remaining provider allowance cannot cover the complete build and readback.'
+        }
         Write-RunnerJournalRecord -Path $journal -Record $binding -Create:(-not $replaceCompleted)
         Write-RunnerJournalRecord -Path $stateFile -Record $binding -Create
         $attempted = $true
-        $buildText = Invoke-PrivateCommand -Executable $ProviderCommand -Argument @('acr', 'build', '--registry', $registry, '--subscription', $configuration.subscriptionId, '--image', ($repository + ':' + $tag), '--file', (Join-Path $context 'Dockerfile'), '--platform', 'linux/amd64', '--timeout', [string]$BuildTimeoutSeconds, '--no-wait', '--no-logs', '--output', 'json', '--only-show-errors', $context) -Owned -Capture -LimitSeconds $TimeoutSeconds -RunClock $clock
+        $buildText = Invoke-PrivateCommand -Executable $ProviderCommand -Argument @('acr', 'build', '--registry', $registry, '--subscription', $configuration.subscriptionId, '--image', ($repository + ':' + $tag), '--file', (Join-Path $context 'Dockerfile'), '--platform', 'linux/amd64', '--timeout', [string]$BuildTimeoutSeconds, '--no-logs', '--output', 'json', '--only-show-errors', $context) -Owned -Capture -LimitSeconds $TimeoutSeconds -RunClock $clock
         $build = ConvertFrom-RunnerPrivateJson -Text $buildText
         if ($build.runId -cnotmatch '^[a-zA-Z0-9_-]{1,64}$') {
             throw 'ACR build identity unavailable.'

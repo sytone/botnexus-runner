@@ -91,8 +91,13 @@ $buildArguments.StatePath = $imageReceiptPath
 & ./scripts/repo/Invoke-RunnerRegistryBuild.ps1 @buildArguments
 ```
 
-The build is asynchronous. An incomplete response is not success. Keep the receipt,
-then use the same command and arguments with `-Reconcile` to inspect that run.
+The command waits for ACR without streaming its private logs and retains the run
+ID from the returned result. It deliberately does not use Azure CLI `--no-wait`,
+which discards the result object. Its default 1500-second overall allowance covers
+the 1200-second ACR build limit and readback. An incomplete response is not success.
+Keep the receipt, then use the same command and arguments with `-Reconcile` to
+inspect that run when its ID was captured. A missing ID requires provider recovery
+against the exact unique source tag; never guess an ID or submit another build.
 Do not submit another build while its outcome is uncertain. The command verifies
 successful ACR output and the registry digest; the private receipt's `image` field
 contains the immutable reference. No local registry authfile or Podman push is used.
