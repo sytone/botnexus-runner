@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "entrypoint": "Invoke-Runner.ps1",
+  "runtimeFiles": [
+    "Invoke-Runner.ps1",
+    "Invoke-RunnerPipeline.ps1",
+    "Invoke-RunnerTransport.ps1",
+    "Import-RunnerResult.ps1",
+    "RunnerTimeout.psm1",
+    "RunnerCost.ps1",
+    "RunnerBuild.ps1",
+    "Import-RunnerDiagnostic.ps1",
+    "Invoke-DiagnosticOwnedCommand.ps1",
+    "DiagnosticContainment.cs",
+    "RunnerProject.psm1",
+    "Invoke-ProjectCommand.ps1",
+    "project.schema.json"
+  ],
+  "senderOwnedVerifier": "SourceSnapshot.psm1",
+  "clientOnlyEvidence": "RunnerEvidence.psm1"
+}

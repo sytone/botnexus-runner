@@ -1,0 +1,8 @@
+# Normalize text files to LF in the repository for cross-platform consistency.
+* text=auto eol=lf
+
+# Windows command scripts should keep CRLF for native execution behavior.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+.github/workflows/*.lock.yml linguist-generated=true merge=ours

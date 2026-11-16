@@ -1,0 +1,6 @@
+{
+  "sourceRepository": "https://github.com/sytone/botnexus",
+  "sourceCommit": "53613ee2c52a473f0dbe08262d598219091216af",
+  "issue": "https://github.com/sytone/botnexus/issues/5162",
+  "note": "Initial extraction snapshot includes preserved tests-first work, not a passing release."
+}

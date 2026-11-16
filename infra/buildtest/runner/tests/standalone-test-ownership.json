@@ -1,0 +1,221 @@
+{
+  "scope": "Complete runner/tests top-level script classification; imported sender/release fixtures are application migration inventory, not generic entrypoints",
+  "files": [
+    {
+      "path": "RunnerBuild.Tests.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "RunnerCost.Tests.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-DiagnosticFixtureClock.ps1",
+      "owner": "generic",
+      "stage": "support",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerBoundary.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerCallbackLifecycle.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerCleanupClock.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerConsistency.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerCoreRuntime.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerDeadlineContract.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerDiagnostic.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerDiagnosticCleanup.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerDiagnosticDeadline.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerDiagnosticPublication.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerFailureSummary.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory; generic explicit-identity evidence only"
+    },
+    {
+      "path": "Test-RunnerGeneric.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerGenericPipeline.ps1",
+      "owner": "generic",
+      "stage": "explicit-input",
+      "reason": "Separate bounded two-layout pipeline fixture; requires explicit bundle and trusted verifier module inputs"
+    },
+    {
+      "path": "Test-RunnerIntegration.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerLinuxChurn.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerLinuxConsistency.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerLinuxRepair.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerMembershipLoad.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerMembershipRuntime.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerPipelineBoundary.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerProject.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerProjectBoundary.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerPublicationExpiry.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerResult.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerReviewRepair.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerSemantic.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerSkipPolicy.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerStandalone.ps1",
+      "owner": "generic",
+      "stage": "entrypoint",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerTimeout.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerTimeoutBoundary.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory"
+    },
+    {
+      "path": "Test-RunnerTransportIdentity.ps1",
+      "owner": "generic",
+      "stage": "UNRUN",
+      "reason": "Not automatically discovered or advertised as passed by this bounded stage"
+    },
+    {
+      "path": "Test-RunnerTrustedBoundary.ps1",
+      "owner": "generic",
+      "stage": "selected",
+      "reason": "Exact fixed inventory; generic explicit-identity evidence only"
+    },
+    {
+      "path": "Test-RunnerModeBoundary.ps1",
+      "owner": "application",
+      "stage": "migration-draft-UNRUN",
+      "reason": "Actual application adapter and six mode graphs; byte-preserved originals and application tree unchanged"
+    }
+  ]
+}

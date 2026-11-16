@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Runner project configuration v1",
+  "description": "Trusted candidate code, not a sandbox or acceptance policy. Limits may only reduce framework ceilings. Paths are literal payload-relative paths, never globs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "protocolVersion", "requiredCapabilities", "limits", "steps"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "protocolVersion": {"const": 1},
+    "requiredCapabilities": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"enum": ["process-v1", "artifacts-v1"]}},
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["budgetSeconds", "reserveSeconds", "maxConcurrency", "maxLogBytes", "maxArtifactBytes", "maxArtifacts"],
+      "properties": {
+        "budgetSeconds": {"type": "integer", "minimum": 5, "maximum": 3600},
+        "reserveSeconds": {"type": "integer", "minimum": 2, "maximum": 300},
+        "maxConcurrency": {"type": "integer", "minimum": 1, "maximum": 8},
+        "maxLogBytes": {"type": "integer", "minimum": 1024, "maximum": 16777216},
+        "maxArtifactBytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "maxArtifacts": {"type": "integer", "minimum": 1, "maximum": 128}
+      }
+    },
+    "steps": {
+      "type": "array", "minItems": 1, "maxItems": 64,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "executable", "arguments", "workingDirectory", "dependsOn", "artifacts"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"},
+          "executable": {"type": "string", "minLength": 1, "maxLength": 1024},
+          "arguments": {"type": "array", "maxItems": 128, "items": {"type": "string", "maxLength": 8192}},
+          "workingDirectory": {"type": "string", "minLength": 1, "maxLength": 512},
+          "dependsOn": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"}},
+          "artifacts": {"type": "array", "maxItems": 128, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 512}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "protocolVersion": 1,
+  "requiredCapabilities": ["process-v1", "artifacts-v1"],
+  "limits": {"budgetSeconds": 12, "reserveSeconds": 4, "maxConcurrency": 2, "maxLogBytes": 65536, "maxArtifactBytes": 65536, "maxArtifacts": 8},
+  "steps": [{"id": "build", "executable": "pwsh", "arguments": ["-NoProfile", "-File", "./Invoke-FixtureCommand.ps1", "-Value", "literal ; $value with spaces"], "workingDirectory": ".", "dependsOn": [], "artifacts": ["result.txt"]}]
+}

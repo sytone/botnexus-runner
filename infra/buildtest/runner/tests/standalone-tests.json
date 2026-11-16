@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "scope": "Wrapper migration regression inventory; not full standalone release qualification.",
+  "tests": [
+    {
+      "path": "Test-RunnerDiagnostic.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "failed=0"
+      ]
+    },
+    {
+      "path": "Test-RunnerDiagnosticDeadline.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "failed=0"
+      ]
+    },
+    {
+      "path": "Test-RunnerDiagnosticCleanup.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "failed=0"
+      ]
+    },
+    {
+      "path": "Test-RunnerDiagnosticPublication.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "failed=0"
+      ]
+    },
+    {
+      "path": "Test-RunnerCallbackLifecycle.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS persistent=True",
+        "PASS persistent=False"
+      ]
+    },
+    {
+      "path": "Test-RunnerPublicationExpiry.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS expired original publication lifecycle failed and disposed:"
+      ]
+    },
+    {
+      "path": "Test-RunnerTimeout.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "failed=0"
+      ]
+    },
+    {
+      "path": "Test-RunnerDeadlineContract.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "failed=0"
+      ]
+    },
+    {
+      "path": "Test-RunnerResult.ps1",
+      "parameter": "",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "RunnerResult.Tests.ps1: PASS"
+      ]
+    },
+    {
+      "path": "Test-RunnerConsistency.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS"
+      ]
+    },
+    {
+      "path": "Test-RunnerTimeoutBoundary.ps1",
+      "parameter": "EvidenceRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS"
+      ]
+    },
+    {
+      "path": "Test-RunnerSkipPolicy.ps1",
+      "parameter": "EvidenceRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS"
+      ]
+    },
+    {
+      "path": "Test-RunnerPipelineBoundary.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 120,
+      "proofs": [
+        "PASS"
+      ]
+    },
+    {
+      "path": "Test-RunnerIntegration.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS operator-limits-not-project-authority",
+        "PASS entrypoint-uses-image-owned-runtime",
+        "PASS environment-supports-build-without-cloud-credentials"
+      ]
+    },
+    {
+      "path": "Test-RunnerFailureSummary.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "PASS generic failure preserves original exception, nonzero exit, partial artifact, tests=null, accepted=false"
+      ]
+    },
+    {
+      "path": "Test-RunnerTrustedBoundary.ps1",
+      "parameter": "ScratchRoot",
+      "timeoutSeconds": 60,
+      "proofs": [
+        "\"failed\": 0"
+      ]
+    }
+  ]
+}

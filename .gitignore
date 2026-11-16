@@ -1,0 +1,79 @@
+## .NET gitignore
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+# Test results
+TestResults/
+[Cc]overage*/
+*.coveragexml
+*.coverage
+# Rider
+.idea/
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+# JetBrains Rider
+*.sln.iml
+
+# Extension build output
+/extensions/
+.botnexus-agent
+node_modules/
+
+# BotNexus runtime credentials — never commit auth tokens or API keys
+auth.json
+.botnexus/auth.json
+*.botnexus-auth
+# Local config overrides that may contain secrets
+botnexus.local.json
+config.local.json
+# Environment files holding credentials. The documented setup keeps provider keys in
+# ~/.botnexus/botnexus.env, outside the repository, but a copy pulled in here for convenience
+# must not be committable - this repository is public.
+*.env
+!*.env.example
+*.log
+*.txt
+# Keep tracked .txt files despite the *.txt rule above
+!requirements.txt
+!tests/**/Snapshots/*.txt
+!tests/**/Fixtures/**/*.txt
+site/**/*
+
+# VitePress build output and cache
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+cognitive-coverage/
+
+# dotnet-affected output
+.affected/
+
+# In-app user guide: copied from docs/user-guide at build time (see CopyUserGuide).
+src/extensions/BotNexus.Extensions.Channels.SignalR.BlazorClient/wwwroot/guide/
+dirs.sln
