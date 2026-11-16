@@ -36,6 +36,8 @@ with (root/'calls.jsonl').open('a') as f:f.write(json.dumps(args)+'\\n')
 if args[:2]==['account','show']:
  print(json.dumps({'id':'11111111-1111-1111-1111-111111111111','tenantId':'22222222-2222-2222-2222-222222222222','user':{'type':'user','name':os.getenv('FIXTURE_ACCOUNT','operator@example.invalid')}}))
 elif args[:2]==['acr','build']:
+ dockerfile=Path(args[args.index('--file')+1])
+ if not dockerfile.is_absolute() or not dockerfile.is_file() or dockerfile.parent!=Path(args[-1]):sys.exit(52)
  (root/'submitted').write_text(os.environ['SOURCE_COMMIT']); print(json.dumps({'runId':'build123'}))
 elif args[:3]==['acr','task','show-run']:
  tag='src-'+os.environ['SOURCE_COMMIT']
@@ -72,6 +74,13 @@ else:sys.exit(51)
         self.assertEqual('example.azurecr.io/runner@sha256:'+'a'*64,state['image'])
         self.assertEqual(1,sum(c[:2]==['acr','build'] for c in self.call_log()))
         self.assertNotEqual(0,self.invoke_build().returncode)
+
+    def test_build_uses_context_dockerfile_from_unrelated_directory(self):
+        self.assertNotEqual(self.repo / 'infra/buildtest/runner', __import__('pathlib').Path.cwd())
+        result = self.invoke_build()
+        self.assertEqual(0, result.returncode, result.stderr)
+        call = next(c for c in self.call_log() if c[:2] == ['acr', 'build'])
+        self.assertEqual(str(self.repo / 'infra/buildtest/runner/Dockerfile'), call[call.index('--file') + 1])
 
     def test_running_build_requires_reconcile_not_rebuild(self):
         result=self.invoke_build(BUILD_STATUS='Running')

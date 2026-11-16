@@ -183,7 +183,7 @@ try {
         Write-RunnerJournalRecord -Path $journal -Record $binding -Create:(-not $replaceCompleted)
         Write-RunnerJournalRecord -Path $stateFile -Record $binding -Create
         $attempted = $true
-        $buildText = Invoke-PrivateCommand -Executable $ProviderCommand -Argument @('acr', 'build', '--registry', $registry, '--subscription', $configuration.subscriptionId, '--image', ($repository + ':' + $tag), '--file', 'Dockerfile', '--platform', 'linux/amd64', '--timeout', [string]$BuildTimeoutSeconds, '--no-wait', '--no-logs', '--output', 'json', '--only-show-errors', $context) -Owned -Capture -LimitSeconds $TimeoutSeconds -RunClock $clock
+        $buildText = Invoke-PrivateCommand -Executable $ProviderCommand -Argument @('acr', 'build', '--registry', $registry, '--subscription', $configuration.subscriptionId, '--image', ($repository + ':' + $tag), '--file', (Join-Path $context 'Dockerfile'), '--platform', 'linux/amd64', '--timeout', [string]$BuildTimeoutSeconds, '--no-wait', '--no-logs', '--output', 'json', '--only-show-errors', $context) -Owned -Capture -LimitSeconds $TimeoutSeconds -RunClock $clock
         $build = ConvertFrom-RunnerPrivateJson -Text $buildText
         if ($build.runId -cnotmatch '^[a-zA-Z0-9_-]{1,64}$') {
             throw 'ACR build identity unavailable.'
