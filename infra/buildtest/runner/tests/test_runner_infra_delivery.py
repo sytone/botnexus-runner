@@ -133,6 +133,22 @@ class SubsequentUpdates(RegistryImageBuild):
 
 
 class InfrastructureUpdates(RunnerProvision):
+    def test_existing_subnet_security_group_is_preserved(self):
+        profile = json.loads(self.profile.read_text())
+        profile['images']['desiredImage'] = 'example.azurecr.io/runner@sha256:' + 'a'*64
+        profile['target']['managedIdentityResourceId'] = '/subscriptions/'+SUB+'/resourceGroups/fixture/providers/Microsoft.ManagedIdentity/userAssignedIdentities/runner'
+        self.profile.write_text(json.dumps(profile))
+        values = {'operatorObjectId':'33333333-3333-3333-3333-333333333333','runnerImageRepository':'example.azurecr.io/runner','runnerImageDigest':'a'*64,'projectConfigPath':'project.json','projectConfigSha256':'b'*64,'storageAccountName':'fixturestorage','identityName':'runner','environmentName':'runner','jobName':'runner','vnetName':'runner','subnetName':'runner','natGatewayName':'runner','publicIpName':'runner','subnetNetworkSecurityGroupId':'/subscriptions/'+SUB+'/resourceGroups/fixture/providers/Microsoft.Network/networkSecurityGroups/runner'}
+        doc = json.loads(self.parameters.read_text())
+        doc['parameters'].update({k:{'value':v} for k,v in values.items()})
+        self.parameters.write_text(json.dumps(doc))
+        result = self.invoke(phase='Infrastructure')
+        self.assertEqual(0, result.returncode, result.stderr)
+        for name in ['main.bicep', 'network.bicep']:
+            text = (self.repo/'infra/buildtest'/name).read_text()
+            self.assertIn('param subnetNetworkSecurityGroupId string', text)
+            self.assertIn('id: subnetNetworkSecurityGroupId', text)
+
     def test_explicit_location_passed_to_template(self):
         result=self.invoke();self.assertEqual(0,result.returncode,result.stderr)
         create=next(c for c in self.call_log() if c[:3]==['deployment','group','create'])

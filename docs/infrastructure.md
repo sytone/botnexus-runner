@@ -20,6 +20,9 @@ Choose resource names and a region explicitly. First creation includes a VNet,
 NAT gateway, storage, registry, managed identity and a manual Container Apps job.
 Review network ranges, provider support, roles and cost before applying templates.
 Updates must keep the same resource names. Changing a name is not a safe rename.
+For an existing subnet with a network security group, supply the observed resource
+ID as the optional `subnetNetworkSecurityGroupId` parameter in both templates.
+Review Azure what-if before applying; do not detach an existing security group.
 
 ## Private input files
 
