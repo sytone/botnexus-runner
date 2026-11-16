@@ -500,6 +500,22 @@ print(json.dumps(job))
         self.assertEqual(1, sum('patch' in r for r in self.records()))
 
 
+    def test_provider_resource_id_case_matches_without_changing_identity(self):
+        job = copy.deepcopy(self.job)
+        identity = job['identity']['userAssignedIdentities'].pop(self.managed_identity)
+        job['identity']['userAssignedIdentities'][self.managed_identity.replace('/resourceGroups/', '/resourcegroups/')] = identity
+        self.jobfile.write_text(json.dumps(job))
+        self.assertEqual(0, self.invoke().returncode)
+        self.assertEqual(1, sum('patch' in r for r in self.records()))
+
+    def test_different_managed_identity_remains_denied(self):
+        job = copy.deepcopy(self.job)
+        identity = job['identity']['userAssignedIdentities'].pop(self.managed_identity)
+        job['identity']['userAssignedIdentities'][self.managed_identity + '-other'] = identity
+        self.jobfile.write_text(json.dumps(job))
+        self.assertNotEqual(0, self.invoke().returncode)
+        self.assertFalse(any('patch' in r for r in self.records()))
+
     def test_explicit_configured_user_positive(self):
         job=copy.deepcopy(self.job); del job['etag']; self.jobfile.write_text(json.dumps(job))
         self.configuration.update(accountType='user', accountName='operator@example.invalid')

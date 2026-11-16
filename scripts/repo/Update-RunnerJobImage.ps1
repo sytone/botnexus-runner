@@ -136,7 +136,8 @@ function Get-RunnerJobInvariant {
     [CmdletBinding()]
     [OutputType([string])]
     param([Collections.IDictionary]$Job, [string]$Resource, [switch]$AllowCurrentTag)
-    if ($Job.id -cne $Resource -or $Job.type -ine 'Microsoft.App/jobs' -or $Job.identity.type -cne 'UserAssigned' -or $Job.identity.userAssignedIdentities.Count -ne 1 -or -not $Job.identity.userAssignedIdentities.Contains($configuration.managedIdentityResourceId)) {
+    $matchingIdentities = @($Job.identity.userAssignedIdentities.Keys | Where-Object { [string]::Equals($_, $configuration.managedIdentityResourceId, [StringComparison]::OrdinalIgnoreCase) })
+    if (-not [string]::Equals($Job.id, $Resource, [StringComparison]::OrdinalIgnoreCase) -or $Job.type -ine 'Microsoft.App/jobs' -or $Job.identity.type -cne 'UserAssigned' -or $Job.identity.userAssignedIdentities.Count -ne 1 -or $matchingIdentities.Count -ne 1) {
         throw 'Unexpected job identity.'
     }
     $configuration = $Job.properties.configuration
