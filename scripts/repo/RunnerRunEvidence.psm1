@@ -115,7 +115,7 @@ function Get-RunnerRunEvidence {
             [void]$expected.Add($path)
         }
     }
-    $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $total = 0L
     foreach ($artifact in $result.projectExecution.artifacts) {
         $path = $artifact.path
@@ -126,7 +126,9 @@ function Get-RunnerRunEvidence {
         if ($seen.Count -gt $Project.limits.maxArtifacts -or $total -gt $Project.limits.maxArtifactBytes) {
             throw 'Artifact limits exceeded.'
         }
-        $local = Join-Path $Root ('artifact-' + $seen.Count)
+        $local = Join-Path $Root ('project/' + $path)
+        $parent = [IO.Path]::GetDirectoryName($local)
+        [void][IO.Directory]::CreateDirectory($parent)
         $relative = ($path.Split('/') | ForEach-Object { [uri]::EscapeDataString($_) }) -join '/'
         & $ProviderRead -Argument @('storage', 'blob', 'download', '--blob-url', ($Destination.TrimEnd('/') + '/project/' + $relative), '--file', $local, '--auth-mode', 'login', '--only-show-errors', '--output', 'json') | Out-Null
         $downloaded = Get-Item -LiteralPath $local -Force -ErrorAction Stop
@@ -139,4 +141,85 @@ function Get-RunnerRunEvidence {
     }
     (Get-FileHash -LiteralPath $resultPath).Hash.ToLowerInvariant()
 }
-Export-ModuleMember -Function Get-RunnerRunEvidence
+function Get-RunnerEvidenceInventory {
+    <#
+    .SYNOPSIS
+    Hashes regular retained evidence without following links.
+    .DESCRIPTION
+    Walks an owned bounded evidence tree and rejects links, case collisions and
+    unexpected non-file entries. Directory entries are included for exact reuse.
+    .PARAMETER Root
+    Existing local evidence directory with stable ancestors checked by the caller.
+    .EXAMPLE
+    Get-RunnerEvidenceInventory -Root /private/run.evidence
+    .OUTPUTS
+    System.Collections.Generic.Dictionary. Relative paths mapped to directory or file hashes.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root)
+    $inventory = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
+    $portable = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $pending = [Collections.Generic.Stack[string]]::new()
+    $pending.Push($Root)
+    while ($pending.Count -gt 0) {
+        $directory = $pending.Pop()
+        $item = Get-Item -LiteralPath $directory -Force -ErrorAction Stop
+        if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw 'Evidence must contain only regular directories and files.'
+        }
+        foreach ($entry in Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop) {
+            $relative = [IO.Path]::GetRelativePath($Root, $entry.FullName).Replace('\', '/')
+            if (-not $portable.Add($relative) -or ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+                throw 'Linked or case-colliding evidence is not supported.'
+            }
+            if ($entry.PSIsContainer) {
+                $inventory.Add($relative, 'directory')
+                $pending.Push($entry.FullName)
+            }
+            else {
+                $inventory.Add($relative, (Get-FileHash -LiteralPath $entry.FullName -Algorithm SHA256).Hash)
+            }
+        }
+    }
+    Write-Output -InputObject $inventory -NoEnumerate
+}
+
+function Save-RunnerRunEvidence {
+    <#
+    .SYNOPSIS
+    Retains verified evidence at a stable run-specific private path.
+    .DESCRIPTION
+    Moves the complete verified staging directory on the same filesystem without
+    replacement. Existing evidence is reused only when every path and byte hash
+    matches. A conflict is never overwritten or removed. Callers hold the target
+    reservation and check stable local ancestors; this is not an OS sandbox.
+    .PARAMETER Root
+    Verified staging directory, deleted by caller cleanup if not moved.
+    .PARAMETER Destination
+    Stable private directory derived from the recorded run identity.
+    .EXAMPLE
+    Save-RunnerRunEvidence -Root /private/staging -Destination /private/run.evidence
+    .OUTPUTS
+    System.String. Retained evidence directory. Never application acceptance.
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([string])]
+    param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)][string]$Destination)
+    $expected = Get-RunnerEvidenceInventory -Root $Root
+    if (Test-Path -LiteralPath $Destination) {
+        $observed = Get-RunnerEvidenceInventory -Root $Destination
+        if ($observed.Count -ne $expected.Count) {
+            throw 'Retained evidence conflicts with verified downloads.'
+        }
+        foreach ($path in $expected.Keys) {
+            if (-not $observed.ContainsKey($path) -or $observed[$path] -cne $expected[$path]) {
+                throw 'Retained evidence conflicts with verified downloads.'
+            }
+        }
+    }
+    elseif ($PSCmdlet.ShouldProcess('verified private run evidence', 'Retain without replacing existing files')) {
+        [IO.Directory]::Move($Root, $Destination)
+    }
+    return $Destination
+}
+Export-ModuleMember -Function Get-RunnerRunEvidence, Save-RunnerRunEvidence

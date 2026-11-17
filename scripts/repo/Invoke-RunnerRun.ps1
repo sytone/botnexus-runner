@@ -40,6 +40,9 @@ reconciliation against installed runtime inputs, immutable image and project cap
 .PARAMETER Reconcile
 Reads one recorded provider execution without upload, start, replay or polling.
 Validates terminal status and downloaded generic evidence, never application acceptance.
+Retains verified result.json and project artifacts in a private run-ID.evidence directory
+beside StatePath; the private receipt records evidencePath. Existing different bytes
+fail closed without replacement. Public output reports evidenceRetained, not private paths.
 Missing immutable execution identity remains unknown and cannot authorize replay.
 .PARAMETER ProviderCommand
 Native provider executable. Defaults to az; inert substitutes are for fixtures only.
@@ -252,6 +255,17 @@ try {
         if ((Get-SourceSnapshotManifest -RepoRoot $root).digest -cne $manifest.digest -or (Get-FileHash -LiteralPath $privateFile).Hash.ToLowerInvariant() -cne $ConfigurationSha256) {
             throw 'Inputs changed during reconciliation.'
         }
+        if ($record.runId -cnotmatch '^[a-f0-9]{32}$') {
+            throw 'Invalid retained run identity.'
+        }
+        $evidencePath = Join-Path $stateParent ($record.runId + '.evidence')
+        if (Test-Path -LiteralPath $evidencePath) {
+            Assert-ObservedPath -Path $evidencePath -Directory | Out-Null
+        }
+        $record.evidencePath = Save-RunnerRunEvidence -Root $scratch -Destination $evidencePath -Confirm:$false
+        if (-not [IO.Directory]::Exists($scratch)) {
+            $scratch = $null
+        }
         $record.status = 'completed-reconciled'
         $record.terminalStatus = $terminalStatus
         $record.evidenceVerified = $true
@@ -289,7 +303,7 @@ try {
                 $fence.Dispose()
             }
         }
-        @{ status = 'execution-observed-unverified'; terminalStatus = $terminalStatus; evidenceVerified = $true; tests = $null; accepted = $false } | ConvertTo-Json -Compress
+        @{ status = 'execution-observed-unverified'; terminalStatus = $terminalStatus; evidenceVerified = $true; evidenceRetained = $true; tests = $null; accepted = $false } | ConvertTo-Json -Compress
         return
     }
     $job = Invoke-RunnerRunProvider -Argument @('rest', '--method', 'get', '--url', ($url + '?api-version=2024-03-01'), '--output', 'json', '--only-show-errors') | ConvertFrom-Json -AsHashtable

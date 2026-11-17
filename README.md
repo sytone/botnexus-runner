@@ -32,7 +32,9 @@ The image includes the runtime and tools. Its entrypoint is
 `image-runtime.json` and `Dockerfile`. Preserve containment, deadline, cleanup and
 failure evidence when updating runtime files. Job execution, source submission and
 result acceptance are a separate stage after infrastructure extraction. Do not
-rebuild infrastructure for an ordinary project run.
+rebuild infrastructure for an ordinary project run. The separate
+[result-retrieval guide](docs/execution-results.md) describes retained evidence and
+its limits; offline checks do not qualify a live execution target.
 
 ## Validation
 
