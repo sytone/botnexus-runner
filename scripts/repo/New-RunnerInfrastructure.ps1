@@ -122,6 +122,9 @@ try {
     if ($Phase -ceq 'Infrastructure') {
         $required += @('operatorObjectId', 'runnerImageRepository', 'runnerImageDigest', 'projectConfigPath', 'projectConfigSha256', 'storageAccountName', 'identityName', 'environmentName', 'jobName', 'vnetName', 'subnetName', 'natGatewayName', 'publicIpName')
     }
+    if ($Phase -ceq 'Infrastructure' -and $document.parameters.Contains('subnetNetworkSecurityGroupId')) {
+        $required += 'subnetNetworkSecurityGroupId'
+    }
     if ((($document.parameters.Keys | Sort-Object) -join ',') -cne (($required | Sort-Object) -join ',')) {
         throw 'Template parameters incomplete or unexpected.'
     }

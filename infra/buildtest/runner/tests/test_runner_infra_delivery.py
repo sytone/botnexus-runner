@@ -36,7 +36,10 @@ with (root/'calls.jsonl').open('a') as f:f.write(json.dumps(args)+'\\n')
 if args[:2]==['account','show']:
  print(json.dumps({'id':'11111111-1111-1111-1111-111111111111','tenantId':'22222222-2222-2222-2222-222222222222','user':{'type':'user','name':os.getenv('FIXTURE_ACCOUNT','operator@example.invalid')}}))
 elif args[:2]==['acr','build']:
- (root/'submitted').write_text(os.environ['SOURCE_COMMIT']); print(json.dumps({'runId':'build123'}))
+ dockerfile=Path(args[args.index('--file')+1])
+ if not dockerfile.is_absolute() or not dockerfile.is_file() or dockerfile.parent!=Path(args[-1]):sys.exit(52)
+ (root/'submitted').write_text(os.environ['SOURCE_COMMIT'])
+ if '--no-wait' not in args:print(json.dumps({'runId':'build123'}))
 elif args[:3]==['acr','task','show-run']:
  tag='src-'+os.environ['SOURCE_COMMIT']
  print(json.dumps({'runId':'build123','status':os.getenv('BUILD_STATUS','Succeeded'),'outputImages':[{'registry':'example.azurecr.io','repository':'runner','tag':tag,'digest':'sha256:'+'a'*64}]}))
@@ -72,6 +75,33 @@ else:sys.exit(51)
         self.assertEqual('example.azurecr.io/runner@sha256:'+'a'*64,state['image'])
         self.assertEqual(1,sum(c[:2]==['acr','build'] for c in self.call_log()))
         self.assertNotEqual(0,self.invoke_build().returncode)
+
+    def test_build_uses_context_dockerfile_from_unrelated_directory(self):
+        self.assertNotEqual(self.repo / 'infra/buildtest/runner', __import__('pathlib').Path.cwd())
+        result = self.invoke_build()
+        self.assertEqual(0, result.returncode, result.stderr)
+        call = next(c for c in self.call_log() if c[:2] == ['acr', 'build'])
+        self.assertEqual(str(self.repo / 'infra/buildtest/runner/Dockerfile'), call[call.index('--file') + 1])
+
+    def test_cli_no_wait_is_not_used_because_it_discards_run_identity(self):
+        result = self.invoke_build()
+        self.assertEqual(0, result.returncode, result.stderr)
+        call = next(c for c in self.call_log() if c[:2] == ['acr', 'build'])
+        self.assertNotIn('--no-wait', call)
+        self.assertIn('--no-logs', call)
+        self.assertEqual('build123', json.loads(self.state.read_text())['runId'])
+
+    def test_local_allowance_must_cover_build(self):
+        result = self.invoke_build('-TimeoutSeconds', '120')
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse(self.calls.exists())
+
+    def test_remaining_allowance_checked_after_prebuild_reads(self):
+        result = self.invoke_build('-TimeoutSeconds', '1260')
+        self.assertNotEqual(0, result.returncode)
+        self.assertTrue(any(c[:2] == ['account', 'show'] for c in self.call_log()))
+        self.assertFalse(any(c[:2] == ['acr', 'build'] for c in self.call_log()))
+        self.assertFalse(self.state.exists())
 
     def test_running_build_requires_reconcile_not_rebuild(self):
         result=self.invoke_build(BUILD_STATUS='Running')
@@ -124,6 +154,22 @@ class SubsequentUpdates(RegistryImageBuild):
 
 
 class InfrastructureUpdates(RunnerProvision):
+    def test_existing_subnet_security_group_is_preserved(self):
+        profile = json.loads(self.profile.read_text())
+        profile['images']['desiredImage'] = 'example.azurecr.io/runner@sha256:' + 'a'*64
+        profile['target']['managedIdentityResourceId'] = '/subscriptions/'+SUB+'/resourceGroups/fixture/providers/Microsoft.ManagedIdentity/userAssignedIdentities/runner'
+        self.profile.write_text(json.dumps(profile))
+        values = {'operatorObjectId':'33333333-3333-3333-3333-333333333333','runnerImageRepository':'example.azurecr.io/runner','runnerImageDigest':'a'*64,'projectConfigPath':'project.json','projectConfigSha256':'b'*64,'storageAccountName':'fixturestorage','identityName':'runner','environmentName':'runner','jobName':'runner','vnetName':'runner','subnetName':'runner','natGatewayName':'runner','publicIpName':'runner','subnetNetworkSecurityGroupId':'/subscriptions/'+SUB+'/resourceGroups/fixture/providers/Microsoft.Network/networkSecurityGroups/runner'}
+        doc = json.loads(self.parameters.read_text())
+        doc['parameters'].update({k:{'value':v} for k,v in values.items()})
+        self.parameters.write_text(json.dumps(doc))
+        result = self.invoke(phase='Infrastructure')
+        self.assertEqual(0, result.returncode, result.stderr)
+        for name in ['main.bicep', 'network.bicep']:
+            text = (self.repo/'infra/buildtest'/name).read_text()
+            self.assertIn('param subnetNetworkSecurityGroupId string', text)
+            self.assertIn('id: subnetNetworkSecurityGroupId', text)
+
     def test_explicit_location_passed_to_template(self):
         result=self.invoke();self.assertEqual(0,result.returncode,result.stderr)
         create=next(c for c in self.call_log() if c[:3]==['deployment','group','create'])

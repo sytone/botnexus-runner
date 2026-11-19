@@ -30,6 +30,8 @@ param subnetName string
 param natGatewayName string
 @minLength(1)
 param publicIpName string
+@description('Existing subnet network security group resource ID. Preserve the observed attachment when updating an existing environment.')
+param subnetNetworkSecurityGroupId string = ''
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@2023-11-01' = {
   name: publicIpName
@@ -76,6 +78,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
         properties: {
           // Workload-profile environments need at least a /27; /23 leaves headroom for scale-out.
           addressPrefix: '10.0.0.0/23'
+          networkSecurityGroup: empty(subnetNetworkSecurityGroupId) ? null : {
+            id: subnetNetworkSecurityGroupId
+          }
           natGateway: {
             id: natGateway.id
           }

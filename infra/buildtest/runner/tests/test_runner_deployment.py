@@ -62,6 +62,7 @@ if args[:2]==['account','show']:
  if mode=='human': print(json.dumps({'id':'11111111-1111-1111-1111-111111111111','tenantId':'22222222-2222-2222-2222-222222222222','user':{'type':'user','name':'PRIVATE_DEPLOY_SENTINEL_87352'}})); sys.exit(0)
  print(json.dumps({'id':'11111111-1111-1111-1111-111111111111','tenantId':'22222222-2222-2222-2222-222222222222','user':{'type':'servicePrincipal','name':'33333333-3333-3333-3333-333333333333'}})); sys.exit(0)
 if args[:2]==['account','get-access-token']:
+ if '--subscription' in args and '--tenant' in args:sys.exit(64)
  print(json.dumps({'accessToken':'SYNTHETIC_DEPLOY_TOKEN','tokenType':'Bearer','subscription':'11111111-1111-1111-1111-111111111111','tenant':'22222222-2222-2222-2222-222222222222','expires_on':str(int(time.time())+3600)})); sys.exit(0)
 assert args[0]=='rest'
 method=args[args.index('--method')+1]
@@ -498,6 +499,22 @@ print(json.dumps(job))
         self.assertEqual(0, self.invoke('-Reconcile').returncode)
         self.assertEqual(1, sum('patch' in r for r in self.records()))
 
+
+    def test_provider_resource_id_case_matches_without_changing_identity(self):
+        job = copy.deepcopy(self.job)
+        identity = job['identity']['userAssignedIdentities'].pop(self.managed_identity)
+        job['identity']['userAssignedIdentities'][self.managed_identity.replace('/resourceGroups/', '/resourcegroups/')] = identity
+        self.jobfile.write_text(json.dumps(job))
+        self.assertEqual(0, self.invoke().returncode)
+        self.assertEqual(1, sum('patch' in r for r in self.records()))
+
+    def test_different_managed_identity_remains_denied(self):
+        job = copy.deepcopy(self.job)
+        identity = job['identity']['userAssignedIdentities'].pop(self.managed_identity)
+        job['identity']['userAssignedIdentities'][self.managed_identity + '-other'] = identity
+        self.jobfile.write_text(json.dumps(job))
+        self.assertNotEqual(0, self.invoke().returncode)
+        self.assertFalse(any('patch' in r for r in self.records()))
 
     def test_explicit_configured_user_positive(self):
         job=copy.deepcopy(self.job); del job['etag']; self.jobfile.write_text(json.dumps(job))
