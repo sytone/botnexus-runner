@@ -51,3 +51,7 @@ Keep real names, identities, credentials, profiles, receipts and logs outside Gi
 outgoing source and history independently before publication; a clean tip cannot
 clear private ancestors. Preserve originals privately. Do not publish unsafe import
 history or force-push. Human merge approval remains required.
+
+The [security guide](SECURITY.md) documents the publication checks, GitHub settings
+that administrators must verify, and disclosure surfaces that repository checks
+cannot protect.

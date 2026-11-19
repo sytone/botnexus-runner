@@ -27,6 +27,8 @@ project.fragment.lock.json
 artifacts/
 # Test results
 TestResults/
+__pycache__/
+*.py[cod]
 [Cc]overage*/
 *.coveragexml
 *.coverage
@@ -58,7 +60,17 @@ config.local.json
 # must not be committable - this repository is public.
 *.env
 !*.env.example
+.env
+.env.*
+!.env.example
 *.log
+*.pem
+*.p12
+*.pfx
+*.key
+*.tfstate*
+*.tfvars
+*.kubeconfig
 *.txt
 # Keep tracked .txt files despite the *.txt rule above
 !requirements.txt

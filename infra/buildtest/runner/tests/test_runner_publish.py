@@ -12,7 +12,7 @@ import unittest
 
 SOURCE = Path(__file__).resolve().parents[4]
 ENTRY = Path('scripts/repo/Publish-RunnerImage.ps1')
-SECRET = 'PRIVATE_PUBLISH_SENTINEL_5162'
+FIXTURE_VALUE = 'PRIVATE_PUBLISH_SENTINEL_5162'
 ID = 'b' * 64
 DIGEST = 'sha256:' + 'a' * 64
 
@@ -41,10 +41,10 @@ class RunnerPublish(unittest.TestCase):
         subprocess.check_call(['git','-C',str(self.repo),'add','.'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         self.tag = 'example.azurecr.io/runner:src-' + self.head
         self.profile = self.root / 'target.json'
-        self.target = {'schemaVersion':1,'account':{'tenantId':'22222222-2222-2222-2222-222222222222','subscriptionId':'11111111-1111-1111-1111-111111111111','accountType':'user','accountName':SECRET+'@example.invalid'},'target':{'resourceId':'/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/fixture/providers/Microsoft.App/jobs/runner'},'images':{'buildTag':self.tag}}
+        self.target = {'schemaVersion':1,'account':{'tenantId':'22222222-2222-2222-2222-222222222222','subscriptionId':'11111111-1111-1111-1111-111111111111','accountType':'user','accountName':FIXTURE_VALUE+'@example.invalid'},'target':{'resourceId':'/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/fixture/providers/Microsoft.App/jobs/runner'},'images':{'buildTag':self.tag}}
         self.profile.write_text(json.dumps(self.target))
         self.evidence = self.root/'qualification.json'; self.evidence.write_text('{"syntheticOnly":true}')
-        self.auth = self.root/'existing-auth.json'; self.auth.write_text(json.dumps({'auths':{'example.azurecr.io':{'auth':base64.b64encode((SECRET+':synthetic:password').encode()).decode()}}})); self.auth.chmod(0o600)
+        self.auth = self.root/'existing-auth.json'; self.auth.write_text(json.dumps({'auths':{'example.azurecr.io':{'auth':base64.b64encode((FIXTURE_VALUE+':synthetic:password').encode()).decode()}}})); self.auth.chmod(0o600)
         self.approval = self.root/'approval.json'
         self.qualified = {'approved':True,'revoked':False,'sourceCommit':self.head,'imageTag':self.tag,'localImageId':ID,'manifestDigest':DIGEST,'runtimeManifestSha256':hashlib.sha256((self.repo/'infra/buildtest/runner/image-runtime.json').read_bytes()).hexdigest(),'evidenceSha256':self.hash(self.evidence)}
         self.approval.write_text(json.dumps(self.qualified))
@@ -117,9 +117,9 @@ print(json.dumps(value))
         wrapper="$env:PUBLISH_EMPTY=''; Remove-Item Env:PUBLISH_ABSENT -ErrorAction SilentlyContinue; $before=@{}; Get-ChildItem Env: | ForEach-Object { $before[$_.Name]=$_.Value }; try { $entry=$args[0]; $parameters=@{}; for ($i=1; $i -lt $args.Count; $i++) { $name=$args[$i].TrimStart([char]45); if ($name -in @('WhatIf','Reconcile')) { $parameters[$name]=$true } else { $i++; $parameters[$name]=$args[$i] } }; & $entry @parameters; $nativeExit=$LASTEXITCODE } finally { $after=@{}; Get-ChildItem Env: | ForEach-Object { $after[$_.Name]=$_.Value }; if (($before | ConvertTo-Json -Compress) -cne ($after | ConvertTo-Json -Compress)) { [Console]::Error.WriteLine('Environment changed'); exit 7 } }; exit $nativeExit"
         command=['pwsh','-NoProfile','-CommandWithArgs',wrapper]+command[3:]
         p=subprocess.run(command,capture_output=True,text=True,env=env,timeout=40)
-        for private in [SECRET,str(self.root),self.tag,ID,DIGEST]:self.assertNotIn(private,p.stdout+p.stderr)
+        for private in [FIXTURE_VALUE,str(self.root),self.tag,ID,DIGEST]:self.assertNotIn(private,p.stdout+p.stderr)
         if self.auth.exists():
-            for private in [self.auth.read_text(errors='replace'),base64.b64encode((SECRET+':synthetic:password').encode()).decode()]:
+            for private in [self.auth.read_text(errors='replace'),base64.b64encode((FIXTURE_VALUE+':synthetic:password').encode()).decode()]:
                 if private: self.assertNotIn(private,p.stdout+p.stderr)
         return p
 
@@ -139,7 +139,7 @@ print(json.dumps(value))
 
     def test_unqualified_revoked_source_image_and_hash_denials(self):
         original=copy.deepcopy(self.qualified)
-        for field,value in [('approved',False),('revoked',True),('sourceCommit','0'*40),('imageTag','example.azurecr.io/other:src-'+self.head),('localImageId','bad'),('runtimeManifestSha256','0'*64),('evidenceSha256','0'*64),('unknown',SECRET)]:
+        for field,value in [('approved',False),('revoked',True),('sourceCommit','0'*40),('imageTag','example.azurecr.io/other:src-'+self.head),('localImageId','bad'),('runtimeManifestSha256','0'*64),('evidenceSha256','0'*64),('unknown',FIXTURE_VALUE)]:
             with self.subTest(field=field):
                 document=dict(original);document[field]=value;self.approval.write_text(json.dumps(document))
                 self.assertNotEqual(0,self.invoke().returncode);self.assertEqual([],self.calls());self.assertFalse(self.state.exists())
@@ -299,17 +299,17 @@ print(json.dumps(value))
     def test_auth_schema_encoding_alias_and_helper_denials(self):
         good=base64.b64encode(b'user:password:later-colon').decode()
         host='example.azurecr.io'
-        records=[b'\xff', b'', b' '*4097, b'null', b'[]', b'{bad', ('{"'+SECRET+'":').encode(), b'{"auths":{}} trailing',
+        records=[b'\xff', b'', b' '*4097, b'null', b'[]', b'{bad', ('{"'+FIXTURE_VALUE+'":').encode(), b'{"auths":{}} trailing',
                  b'{"auths":{},"AUTHS":{}}', b'{"auths":{"example.azurecr.io":{"auth":"x","AUTH":"y"}}}',
-                 json.dumps({SECRET:True}).encode()]
+                 json.dumps({FIXTURE_VALUE:True}).encode()]
         records += [json.dumps(v).encode() for v in [
             {'syntheticOnly':True}, {'auths':None}, {'auths':{}}, {'auths':[]},
             {'auths':{host:{'auth':good}},'credHelpers':{}},
             {'auths':{host:{'auth':good}},'credsStore':''},
-            {'auths':{host:{'auth':good,'identitytoken':SECRET}}},
-            {'auths':{host:{'auth':good,'registrytoken':SECRET}}},
-            {'auths':{host:{'auth':good,'username':SECRET}}},
-            {'auths':{host:{'auth':good,'unknown':SECRET}}},
+            {'auths':{host:{'auth':good,'identitytoken':FIXTURE_VALUE}}},
+            {'auths':{host:{'auth':good,'registrytoken':FIXTURE_VALUE}}},
+            {'auths':{host:{'auth':good,'username':FIXTURE_VALUE}}},
+            {'auths':{host:{'auth':good,'unknown':FIXTURE_VALUE}}},
             {'auths':{host:{'auth':None}}}, {'auths':{host:{'auth':42}}},
             {'auths':{host:{'auth':good},'other.azurecr.io':{'auth':good}}}]]
         for key in ['EXAMPLE.azurecr.io','https://'+host,host+'/',host+':443',host+'/runner',host+':tag',host+'@sha256:abc','*']:
@@ -347,8 +347,8 @@ print(json.dumps(value))
         prior=json.loads(journal.read_text());receipt=json.loads(self.state.read_text())
         for key,value in {'authContractVersion':1,'authFilePath':str(self.auth),'authFileSha256':self.hash(self.auth),'authRegistryHost':'example.azurecr.io','authRegistryKey':'example.azurecr.io'}.items():
             self.assertEqual(value,prior[key]);self.assertEqual(value,receipt[key])
-        self.assertNotIn(SECRET,self.state.read_text())
-        self.assertNotIn(base64.b64encode((SECRET+':synthetic:password').encode()).decode(),self.state.read_text())
+        self.assertNotIn(FIXTURE_VALUE,self.state.read_text())
+        self.assertNotIn(base64.b64encode((FIXTURE_VALUE+':synthetic:password').encode()).decode(),self.state.read_text())
         alias=self.root/'other-auth.json';alias.write_bytes(self.auth.read_bytes());alias.chmod(0o600)
         selected=self.auth;self.auth=alias
         self.assertNotEqual(0,self.invoke('-Reconcile').returncode)
